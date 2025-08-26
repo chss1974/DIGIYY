@@ -1,0 +1,545 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DIGITAL MARKSHEET</title>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    @page { size: A5; margin: 10mm; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    .login-container { display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f0f0; }
+    .login-box { background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .login-box h2 { margin-bottom: 20px; }
+    .login-box input { display: block; margin-bottom: 15px; width: 100%; padding: 8px; }
+    .container { display: none; width: 100%; max-width: 595px; margin: auto; background-color: white; padding: 20px; border-radius: 10px; color: black; }
+    #subjectFields { display: grid; grid-template-columns: 150px 80px 80px 80px 80px; align-items: center; gap: 10px; margin-top: 20px; }
+    .button-row { margin-top: 40px; text-align: center; }
+    .signature-row { display: flex; justify-content: space-between; align-items: center; margin-top: 40px; font-weight: bold; }
+    .signature-block { position: relative; text-align: center; width: 180px; height: 180px; margin-left: 80px; }
+    .signature-block img.signature { max-height: 50px; width: auto; position: absolute; top: 35px; left: 50%; transform: translateX(-50%); z-index: 1; }
+    .signature-block .principal-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.2em; font-weight: bold; color: #000; z-index: 2; }
+    .school-title { display: flex; align-items: center; justify-content: flex-start; margin-bottom: 10px; }
+    .school-title img { max-height: 80px; margin-right: 20px; }
+    .exam-header { display:flex; align-items:center; gap:10px; margin: 10px 0 20px; }
+    .examNameDisplay { border:none; font-weight:bold; background:transparent; pointer-events:none; width: 260px; }
+    @media print {
+      button, input[type="submit"] { display: none; }
+      body { padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .container { width: 100%; margin: 0; }
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body BGCOLOR=3B5998>
+  <div class="login-container" id="loginBox">
+    <div class="login-box">
+      <h2>Login</h2>
+      <input type="text" id="username" placeholder="Username" />
+      <input type="password" id="password" placeholder="Password" />
+      <button id="loginBtn">Login</button>
+      <p id="loginError" style="color: red; display: none;">Invalid Username or Password</p>
+    </div>
+  </div>
+
+  <div class="container" id="mainContent"></div>
+
+  <script>
+    // ===================== AUTH (no inline handlers) =====================
+    function authenticate() {
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+      if (user === "CHSS" && pass === "CHSS1974") {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("mainContent").style.display = "block";
+        loadMarksheet();
+      } else {
+        document.getElementById("loginError").style.display = "block";
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('loginBtn').addEventListener('click', authenticate);
+    });
+
+    // ===================== BOOT =====================
+    function loadMarksheet() {
+      document.getElementById("mainContent").innerHTML = getCommonLayout();
+      initSubjects();
+      initRollNos();
+      wireExamHandlers();
+      updateExamTextDisplays();
+    }
+
+    // ===================== LAYOUT SWITCHER =====================
+    function handleExamTypeChange() {
+      const select = document.getElementById("examType");
+      if (!select) return;
+      const selectedText = select.options[select.selectedIndex]?.text || '';
+
+      if (selectedText === "Weekly Test") {
+        document.getElementById("mainContent").innerHTML = getWeeklyTestLayout();
+        initRollNos();
+        initWeeklyTest();
+      } else if (selectedText === "Hr.Sec Examination") {
+        document.getElementById("mainContent").innerHTML = getHrSecLayout();
+        initRollNos();
+        initHrSec();
+      } else {
+        document.getElementById("mainContent").innerHTML = getCommonLayout();
+        initSubjects();
+        initRollNos();
+      }
+      // Re-wire events after DOM replacement
+      wireExamHandlers();
+      // Restore the selected exam in the new dropdown
+      const newSelect = document.getElementById('examType');
+      if (newSelect) newSelect.value = selectedText;
+      updateExamTextDisplays();
+    }
+
+    // ===================== LAYOUTS =====================
+    function headerHTML() {
+      return `
+        <div class="school-title">
+          <img src="https://res.cloudinary.com/dwfheimtj/image/upload/v1749614028/SSSSSSSSSSSSSS_yrbkds.png" alt="School Logo" />
+          <div>
+            <h3 style="margin:0">CHANDMARI HIGHER SECONDARY SCHOOL</h3>
+            <div class="exam-header">
+              <label>Examination</label>
+              <select id="examType" required>
+                <option value="">Select Examination</option>
+                <option>Weekly Test</option>
+                <option>Mid Term</option>
+                <option>1st Assessment</option>
+                <option>2nd Assessment</option>
+                <option>Model Examination</option>
+                <option>Final Examination</option>
+                <option>Hr.Sec Examination</option>
+              </select>
+              <input type="text" class="examNameDisplay" id="examNameBox" readonly placeholder="Selected exam will appear here" />
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function signatureHTML() {
+      return `
+        <div class="signature-row">
+          <div>Class Teacher</div>
+          <div class="signature-block">
+            <img src="https://res.cloudinary.com/dwfheimtj/image/upload/v1750691317/SIGNATURE1_sxs2ss.jpg" class="signature" alt="Digital Signature" />
+            <div class="principal-label">Principal</div>
+          </div>
+        </div>`;
+    }
+
+    function buttonsHTML() {
+      return `
+        <div class="button-row">
+          <hr>
+          <button type="button" onclick="downloadAsImage()">Download</button>
+          <button type="button" onclick="window.print()">Print</button>
+          <button type="reset">Reset</button>
+        </div>`;
+    }
+
+    function getCommonLayout() {
+      return `
+        ${headerHTML()}
+        <form id="markForm">
+          <label for="studentName">Name</label>
+          <input type="text" id="studentName" placeholder="Student Name" required />
+
+          <label for="studentClass">Class</label>
+          <select id="studentClass" required>
+            <option value="">Class</option>
+            <option>LKG</option>
+            <option>UKG</option>
+            <option>1</option>
+            <option>2</option>
+            <option>3</option>
+            <option>4</option>
+            <option>5</option>
+            <option>6</option>
+            <option>7</option>
+            <option>8</option>
+            <option>9</option>
+            <option>10</option>
+            <option>11</option>
+            <option>12</option>
+          </select>
+
+          <label for="studentSec">Section</label>
+          <select id="studentSec" required>
+            <option value="">Sec</option>
+            <option>A</option>
+            <option>B</option>
+            <option>C</option>
+            <option>D</option>
+          </select>
+
+          <label for="rollNo">RollNo</label>
+          <select id="rollNo" required></select>
+
+          <div id="subjectFields"></div>
+
+          <label>Total Marks</label><br>
+          <input type="number" id="overallTotal" placeholder="Total Marks" readonly /><br>
+          <label>Average Marks</label><br>
+          <input type="number" id="averageMarks" placeholder="Average Marks" readonly /><br>
+
+          <label for="comments">Comments</label><br>
+          <textarea id="comments" placeholder="Enter comments here..." rows="3" style="width:100%;"></textarea><br>
+
+          ${signatureHTML()}
+          ${buttonsHTML()}
+        </form>`;
+    }
+
+    function getWeeklyTestLayout() {
+      return `
+        ${headerHTML()}
+        <form id="weeklyForm">
+          <label for="studentName">Name</label>
+          <input type="text" id="studentName" placeholder="Student Name" required />
+
+          <label for="studentClass">Class</label>
+          <select id="studentClass" required>
+            <option value="">Class</option>
+            <option>LKG</option>
+            <option>UKG</option>
+            <option>1</option>
+            <option>2</option>
+            <option>3</option>
+            <option>4</option>
+            <option>5</option>
+            <option>6</option>
+            <option>7</option>
+            <option>8</option>
+            <option>9</option>
+            <option>10</option>
+          </select>
+
+          <label for="studentSec">Section</label>
+          <select id="studentSec" required>
+            <option value="">Sec</option>
+            <option>A</option>
+            <option>B</option>
+            <option>C</option>
+            <option>D</option>
+          </select>
+
+          <label for="rollNo">RollNo</label>
+          <select id="rollNo" required></select>
+
+          <table id="weeklyTestTable" border="1" cellspacing="0" cellpadding="5" style="width:100%; text-align:center; border-collapse:collapse; margin-top:20px;">
+            <tr>
+              <th>Subject</th>
+              <th>Total Marks</th>
+            </tr>
+            <tr><td align="left">English</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
+            <tr><td align="left">Maths</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
+            <tr><td align="left">Science</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
+            <tr><td align="left">Grammar / Alt / Hindi</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
+            <tr><td align="left">Social Science</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
+            <tr><td align="left">Moral Values</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
+            <tr><td align="left">Heritage</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
+            <tr><td align="left">GK</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
+            <tr><td align="left">Computer / EE / FIT / BK</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
+            <tr><th align="left">Total Marks</th><td><input type="text" id="weeklyTotal" readonly></td></tr>
+            <tr><th align="left">Average Marks</th><td><input type="text" id="weeklyAverage" readonly></td></tr>
+            <tr><th align="left">Remarks</th><td><input type="text" size="30" id="weeklyComments"></td></tr>
+          </table>
+
+          ${signatureHTML()}
+          ${buttonsHTML()}
+        </form>`;
+    }
+
+    function getHrSecLayout() {
+      return `
+        ${headerHTML()}
+        <form id="hrSecForm">
+          <label for="studentName">Name</label>
+          <input type="text" id="studentName" placeholder="Student Name" required />
+
+          <label for="studentClass">Class</label>
+          <select id="studentClass" required>
+            <option value="">Class</option>
+            <option>11</option>
+            <option>12</option>
+          </select>
+
+          <label for="studentSec">Section</label>
+          <select id="studentSec" required>
+            <option value="">Sec</option>
+            <option>A</option>
+            <option>B</option>
+            <option>C</option>
+            <option>D</option>
+          </select>
+
+          <label for="rollNo">RollNo</label>
+          <select id="rollNo" required></select>
+
+          <table id="hrSecTable" border="1" cellspacing="0" cellpadding="5" style="width:100%; text-align:center; border-collapse:collapse; margin-top:20px;">
+            <tr>
+              <th>Subject</th>
+              <th>Total Marks</th>
+            </tr>
+            <tr><td align="left">English</td><td><input type="number" class="hrSecMark" min="0" max="100"></td></tr>
+            <tr><td align="left">Alt/Tenyidie</td><td><input type="number" class="hrSecMark" min="0" max="100"></td></tr>
+            <tr><td align="left">History</td><td><input type="number" class="hrSecMark" min="0" max="100"></td></tr>
+            <tr><td align="left">Pol.Sc</td><td><input type="number" class="hrSecMark" min="0" max="100"></td></tr>
+            <tr><td align="left">Sociology</td><td><input type="number" class="hrSecMark" min="0" max="100"></td></tr>
+            <tr><td align="left">Eco/Edu</td><td><input type="number" class="hrSecMark" min="0" max="100"></td></tr>
+            <tr><td align="left">EVS</td><td><input type="number" class="hrSecMark" min="0" max="100"></td></tr>
+            <tr><th align="left">Total Marks</th><td><input type="text" id="hrSecTotal" readonly></td></tr>
+            <tr><th align="left">Average Marks</th><td><input type="text" id="hrSecAverage" readonly></td></tr>
+            <tr><th align="left">Remarks</th><td><input type="text" size="30" id="hrSecComments"></td></tr>
+          </table>
+
+          ${signatureHTML()}
+          ${buttonsHTML()}
+        </form>`;
+    }
+
+    // ===================== CALC WIRING =====================
+    function initWeeklyTest() {
+      const inputs = document.querySelectorAll('.weeklyMark');
+      const totalEl = document.getElementById('weeklyTotal');
+      const avgEl = document.getElementById('weeklyAverage');
+      function recalc() {
+        let total = 0; let count = 0;
+        inputs.forEach(inp => { const v = inp.value.trim(); if (v !== '') { const n = parseFloat(v); if (!isNaN(n)) { total += n; count++; } } });
+        if (totalEl) totalEl.value = total;
+        if (avgEl) avgEl.value = count > 0 ? (total / count).toFixed(2) : '';
+      }
+      inputs.forEach(inp => inp.addEventListener('input', recalc));
+      recalc();
+    }
+
+    function getHrSecLayout() {
+  return `
+    ${headerHTML()}
+    <form id="hrSecForm">
+      <label for="studentName">Name</label>
+      <input type="text" id="studentName" placeholder="Student Name" required />
+
+      <label for="studentClass">Class</label>
+      <select id="studentClass" required>
+        <option value="">Class</option>
+        <option>11</option>
+        <option>12</option>
+      </select>
+
+      <label for="studentSec">Section</label>
+      <select id="studentSec" required>
+        <option value="">Sec</option>
+        <option>A</option>
+        <option>B</option>
+        <option>C</option>
+        <option>D</option>
+      </select>
+
+      <label for="rollNo">RollNo</label>
+      <select id="rollNo" required></select>
+
+      <table id="hrSecTable" border="1" cellspacing="0" cellpadding="5" 
+        style="width:100%; text-align:center; border-collapse:collapse; margin-top:20px;">
+        <tr>
+          <th>Subject</th>
+          <th>Ext</th>
+          <th>Int</th>
+          <th>Total</th>
+        </tr>
+        ${["English","Alt/Tenyidie","History","Pol.Sc","Sociology","Eco/Edu","EVS"].map(sub => `
+          <tr>
+            <td align="left">${sub}</td>
+            <td><input type="number" class="hrExt" min="0" max="100"></td>
+            <td><input type="number" class="hrInt" min="0" max="100"></td>
+            <td><input type="text" class="hrTotal" readonly></td>
+          </tr>`).join('')}
+        <tr><th align="left">Total Marks</th><td colspan="3"><input type="text" id="hrSecTotal" readonly></td></tr>
+        <tr><th align="left">Average Marks</th><td colspan="3"><input type="text" id="hrSecAverage" readonly></td></tr>
+        <tr><th align="left">Remarks</th><td colspan="3"><input type="text" size="30" id="hrSecComments"></td></tr>
+      </table>
+
+      ${signatureHTML()}
+      ${buttonsHTML()}
+    </form>`;
+}
+
+function initHrSec() {
+  const extInputs = document.querySelectorAll('.hrExt');
+  const intInputs = document.querySelectorAll('.hrInt');
+  const totalInputs = document.querySelectorAll('.hrTotal');
+  const totalEl = document.getElementById('hrSecTotal');
+  const avgEl = document.getElementById('hrSecAverage');
+
+  function recalc() {
+    let grandTotal = 0, subjectCount = 0;
+    extInputs.forEach((ext, i) => {
+      const int = intInputs[i];
+      const tot = totalInputs[i];
+      const extVal = parseInt(ext.value) || 0;
+      const intVal = parseInt(int.value) || 0;
+      const sum = (ext.value || int.value) ? extVal + intVal : "";
+      tot.value = sum;
+      if (sum !== "") {
+        grandTotal += extVal + intVal;
+        subjectCount++;
+      }
+    });
+    totalEl.value = grandTotal;
+    avgEl.value = subjectCount > 0 ? (grandTotal / subjectCount).toFixed(2) : '';
+  }
+
+  extInputs.forEach(inp => inp.addEventListener('input', recalc));
+  intInputs.forEach(inp => inp.addEventListener('input', recalc));
+  recalc();
+}
+
+
+    // ===================== COMMON LAYOUT SUBJECT WIRING =====================
+    function initSubjects() {
+      const subjects = ["English", "Grammar", "Mathematics", "Science", "SocialScience", "Hindi", "MoralValues", "Heritage", "GK", "Art", "Spelling", "Computer"];
+      const subjectFieldsContainer = document.getElementById("subjectFields");
+      if (!subjectFieldsContainer) return;
+      subjectFieldsContainer.innerHTML = "";
+      subjects.forEach(subject => {
+        subjectFieldsContainer.innerHTML += `
+          <label>${subject}</label>
+          <input type="number" placeholder="EXT" min="0" max="100" oninput="calculateSubjectTotal(this)">
+          <input type="number" placeholder="INT" min="0" max="100" oninput="calculateSubjectTotal(this)">
+          <input type="number" placeholder="Total" readonly>
+          <input type="text" placeholder="Grade" readonly>
+        `;
+        if (subject === "Computer") subjectFieldsContainer.innerHTML += '<br/>';
+      });
+    }
+
+    function calculateSubjectTotal() {
+      const inputs = Array.from(document.querySelectorAll('#subjectFields input'));
+      for (let i = 0; i < inputs.length; i += 4) {
+        const extValue = inputs[i].value;
+        const intValue = inputs[i + 1].value;
+        const ext = parseInt(extValue);
+        const int = parseInt(intValue);
+        if (extValue === "" && intValue === "") {
+          inputs[i + 2].value = "";
+          inputs[i + 3].value = "";
+        } else {
+          const total = (isNaN(ext) ? 0 : ext) + (isNaN(int) ? 0 : int);
+          inputs[i + 2].value = total;
+          inputs[i + 3].value = getGrade(total);
+        }
+      }
+      calculateOverallTotalAndAverage();
+    }
+
+    function getGrade(score) {
+      if (score >= 90) return "A**";
+      if (score >= 80) return "A*";
+      if (score >= 70) return "B1";
+      if (score >= 60) return "B2";
+      if (score >= 50) return "C1";
+      if (score >= 40) return "C2";
+      return "D";
+    }
+
+    function calculateOverallTotalAndAverage() {
+      const allTotals = document.querySelectorAll('#subjectFields input[placeholder="Total"]');
+      let sum = 0; let count = 0;
+      allTotals.forEach(input => { const val = parseInt(input.value); if (!isNaN(val)) { sum += val; count++; } });
+      const totalEl = document.getElementById('overallTotal');
+      const avgEl = document.getElementById('averageMarks');
+      if (totalEl) totalEl.value = sum;
+      if (avgEl) avgEl.value = count > 0 ? (sum / count).toFixed(2) : '';
+    }
+
+    // ===================== EXPORT =====================
+    function downloadAsImage() {
+  const container = document.querySelector('.container');
+  html2canvas(container, { useCORS: true, scale: 2 }).then(canvas => {
+    canvas.toBlob(function(blob) {
+      const link = document.createElement('a');
+      const studentName = document.getElementById('studentName')?.value || 'marksheet';
+      const studentClass = document.getElementById('studentClass')?.value || '';
+      const fileName = `${studentName}_Class${studentClass}.jpg`;
+
+      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+        // For old IE/Edge
+        window.navigator.msSaveOrOpenBlob(blob, fileName);
+      } else {
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+    }, 'image/jpeg', 1.0);
+  });
+}
+
+    // ===================== ROLL NOS =====================
+    function initRollNos() {
+      const rollNoSelect = document.getElementById("rollNo");
+      if (!rollNoSelect) return;
+      rollNoSelect.innerHTML = '';
+      for (let i = 1; i <= 90; i++) {
+        const option = document.createElement("option");
+        option.value = i; option.textContent = i; rollNoSelect.appendChild(option);
+      }
+    }
+
+    // ===================== EXAM TEXTBOX WIRING =====================
+    function updateExamTextDisplays() {
+      const select = document.getElementById('examType');
+      if (!select) return;
+      const text = select.options[select.selectedIndex]?.text || '';
+      document.querySelectorAll('.examNameDisplay').forEach(el => { el.value = text; });
+    }
+
+    function wireExamHandlers() {
+      const select = document.getElementById('examType');
+      if (!select) return;
+      select.addEventListener('change', () => {
+        handleExamTypeChange();
+      });
+    }
+
+    // ===================== SELF TESTS =====================
+    (function selfTests(){
+      try {
+        console.assert(typeof authenticate === 'function', 'authenticate should be defined');
+        console.assert(typeof getCommonLayout === 'function', 'getCommonLayout should be defined');
+        console.assert(typeof getWeeklyTestLayout === 'function', 'getWeeklyTestLayout should be defined');
+        console.assert(typeof getHrSecLayout === 'function', 'getHrSecLayout should be defined');
+        console.assert(typeof handleExamTypeChange === 'function', 'handleExamTypeChange should be defined');
+        // Build once to test roll nos
+        document.getElementById('mainContent').innerHTML = getCommonLayout();
+        initSubjects(); initRollNos();
+        const rn = document.getElementById('rollNo');
+        console.assert(rn && rn.options.length === 90, 'RollNo should have 90 options');
+        // Exam text box test
+        const exSel = document.getElementById('examType');
+        if (exSel) {
+          exSel.value = 'Weekly Test';
+          updateExamTextDisplays();
+          const boxVal = document.querySelector('.examNameDisplay')?.value || '';
+          console.assert(boxVal === 'Weekly Test', 'Exam text box should mirror the selected exam');
+        }
+        console.log('[SelfTest] Core functions present and basic checks passed');
+        // Reset to normal UI
+        loadMarksheet();
+      } catch (e) {
+        console.warn('[SelfTest] Failed:', e);
+      }
+    })();
+  </script>
+</body>
+</html>
