@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -45,7 +45,7 @@
   <div class="container" id="mainContent"></div>
 
   <script>
-    // ===================== AUTH (no inline handlers) =====================
+    // ===================== AUTH =====================
     function authenticate() {
       const user = document.getElementById("username").value;
       const pass = document.getElementById("password").value;
@@ -85,6 +85,9 @@
         document.getElementById("mainContent").innerHTML = getHrSecLayout();
         initRollNos();
         initHrSec();
+      } else if (selectedText === "Phase-II Assessment") {
+        document.getElementById("mainContent").innerHTML = PhaseIILayout();
+        initRollNos();
       } else {
         document.getElementById("mainContent").innerHTML = getCommonLayout();
         initSubjects();
@@ -92,24 +95,26 @@
       }
       // Re-wire events after DOM replacement
       wireExamHandlers();
-      // Restore the selected exam in the new dropdown
+      // Restore the selected exam in the new dropdown (match by text)
       const newSelect = document.getElementById('examType');
-      if (newSelect) newSelect.value = selectedText;
+      if (newSelect) {
+        Array.from(newSelect.options).forEach(opt => {
+          if (opt.text === selectedText) opt.selected = true;
+        });
+      }
       updateExamTextDisplays();
     }
 
-function buttonsHTML() {
-  return `
-    <div class="button-row">
-      <hr>
-      <button type="button" onclick="downloadAsImage()">Download Image</button>
-      <button type="button" onclick="saveData()">Save Data</button>
-      <button type="button" onclick="window.print()">Print</button>
-      <button type="reset">Reset</button>
-    </div>`;
-}
-
-
+    function buttonsHTML() {
+      return `
+        <div class="button-row">
+          <hr>
+          <button type="button" onclick="downloadAsImage()">Download</button>
+          <button type="button" onclick="saveData()">Save Data</button>
+          <button type="button" onclick="window.print()">Print</button>
+          <button type="reset">Reset</button>
+        </div>`;
+    }
 
     // ===================== LAYOUTS =====================
     function headerHTML() {
@@ -128,6 +133,7 @@ function buttonsHTML() {
                 <option>2nd Assessment</option>
                 <option>Model Examination</option>
                 <option>Final Examination</option>
+                <option>Phase-II Assessment</option>
                 <option>Hr.Sec Examination</option>
               </select>
               <input type="text" class="examNameDisplay" id="examNameBox" readonly placeholder="Selected exam will appear here" />
@@ -147,25 +153,15 @@ function buttonsHTML() {
         </div>`;
     }
 
-    function buttonsHTML() {
-      return `
-        <div class="button-row">
-          <hr>
-          <button type="button" onclick="downloadAsImage()">Download</button>
-          <button type="button" onclick="window.print()">Print</button>
-          <button type="reset">Reset</button>
-        </div>`;
-    }
-
     function getCommonLayout() {
       return `
         ${headerHTML()}
         <form id="markForm">
           <label for="studentName">Name</label>
-          <input type="text" id="studentName" placeholder="Student Name" required />
+          <input type="text" id="studentName" name="studentName" placeholder="Student Name" required />
 
           <label for="studentClass">Class</label>
-          <select id="studentClass" required>
+          <select id="studentClass" name="studentClass" required>
             <option value="">Class</option>
             <option>LKG</option>
             <option>UKG</option>
@@ -184,7 +180,7 @@ function buttonsHTML() {
           </select>
 
           <label for="studentSec">Section</label>
-          <select id="studentSec" required>
+          <select id="studentSec" name="studentSec" required>
             <option value="">Sec</option>
             <option>A</option>
             <option>B</option>
@@ -193,31 +189,30 @@ function buttonsHTML() {
           </select>
 
           <label for="rollNo">RollNo</label>
-          <select id="rollNo" required></select>
+          <select id="rollNo" name="rollNo" required></select>
 
           <div id="subjectFields"></div>
 
           <label>Total Marks</label><br>
-          <input type="number" id="overallTotal" placeholder="Total Marks" readonly /><br>
+          <input type="number" id="overallTotal" name="overallTotal" placeholder="Total Marks" readonly /><br>
           <label>Average Marks</label><br>
-          <input type="number" id="averageMarks" placeholder="Average Marks" readonly /><br>
+          <input type="number" id="averageMarks" name="averageMarks" placeholder="Average Marks" readonly /><br>
 
           <label for="comments">Comments</label><br>
-          <textarea id="comments" placeholder="Enter comments here..." rows="3" style="width:100%;"></textarea><br>
+          <textarea id="comments" name="comments" placeholder="Enter comments here..." rows="3" style="width:100%;"></textarea><br>
 
 <BR>
-NWD &nbsp;&nbsp;<input type=text SIZE=3> &nbsp;&nbsp;Attendence &nbsp;&nbsp;<input type=text SIZE=3><BR>
+NWD &nbsp;&nbsp;<input type="text" name="NWD" SIZE=3> &nbsp;&nbsp;Attendence &nbsp;&nbsp;<input type="text" name="attendance" SIZE=3><BR>
 <BR>
-Result <select>
-<option value=>
-<option value=Promoted>Promoted
-<option value=Fail>Fail
-<option value=Pass>Pass
-<option value=Needs Improvement>Needs Improvement
-<option value=Passed under Consideration>Passed under Consideration
-<option value=Passed with TC>Passed with TC
+Result <select name="result">
+<option value=""></option>
+<option value="Promoted">Promoted</option>
+<option value="Fail">Fail</option>
+<option value="Pass">Pass</option>
+<option value="Needs Improvement">Needs Improvement</option>
+<option value="Passed under Consideration">Passed under Consideration</option>
+<option value="Passed with TC">Passed with TC</option>
 </select>
-
 
 
           ${signatureHTML()}
@@ -230,10 +225,10 @@ Result <select>
         ${headerHTML()}
         <form id="weeklyForm">
           <label for="studentName">Name</label>
-          <input type="text" id="studentName" placeholder="Student Name" required />
+          <input type="text" id="studentName" name="studentName" placeholder="Student Name" required />
 
           <label for="studentClass">Class</label>
-          <select id="studentClass" required>
+          <select id="studentClass" name="studentClass" required>
             <option value="">Class</option>
             <option>LKG</option>
             <option>UKG</option>
@@ -250,7 +245,7 @@ Result <select>
           </select>
 
           <label for="studentSec">Section</label>
-          <select id="studentSec" required>
+          <select id="studentSec" name="studentSec" required>
             <option value="">Sec</option>
             <option>A</option>
             <option>B</option>
@@ -259,26 +254,19 @@ Result <select>
           </select>
 
           <label for="rollNo">RollNo</label>
-          <select id="rollNo" required></select>
+          <select id="rollNo" name="rollNo" required></select>
 
           <table id="weeklyTestTable" border="1" cellspacing="0" cellpadding="5" style="width:100%; text-align:center; border-collapse:collapse; margin-top:20px;">
             <tr>
               <th>Subject</th>
               <th>Total Marks</th>
             </tr>
-            <tr><td align="left">English</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
-            <tr><td align="left">Maths</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
-            <tr><td align="left">Science</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
-            <tr><td align="left">Alt / Hindi</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
-            <tr><td align="left">Grammar</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
-            <tr><td align="left">Social Science</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
-            <tr><td align="left">Moral Values</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
-            <tr><td align="left">Heritage</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
-            <tr><td align="left">GK</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
-            <tr><td align="left">Computer / EE / FIT / BK</td><td><input type="number" class="weeklyMark" min="0" max="100"></td></tr>
-            <tr><th align="left">Total Marks</th><td><input type="text" id="weeklyTotal" readonly></td></tr>
-            <tr><th align="left">Average Marks</th><td><input type="text" id="weeklyAverage" readonly></td></tr>
-            <tr><th align="left">Remarks</th><td><input type="text" size="30" id="weeklyComments"></td></tr>
+            ${['English','Maths','Science','Alt / Hindi','Grammar','Social Science','Moral Values','Heritage','GK','Computer / EE / FIT / BK'].map((s,i) => `
+              <tr><td align="left">${s}</td><td><input type="number" name="weekly_${i}" class="weeklyMark" min="0" max="100"></td></tr>
+            `).join('')}
+            <tr><th align="left">Total Marks</th><td><input type="text" id="weeklyTotal" name="weeklyTotal" readonly></td></tr>
+            <tr><th align="left">Average Marks</th><td><input type="text" id="weeklyAverage" name="weeklyAverage" readonly></td></tr>
+            <tr><th align="left">Remarks</th><td><input type="text" size="30" id="weeklyComments" name="weeklyComments"></td></tr>
           </table>
 
           ${signatureHTML()}
@@ -291,17 +279,17 @@ Result <select>
         ${headerHTML()}
         <form id="hrSecForm">
           <label for="studentName">Name</label>
-          <input type="text" id="studentName" placeholder="Student Name" required />
+          <input type="text" id="studentName" name="studentName" placeholder="Student Name" required />
 
           <label for="studentClass">Class</label>
-          <select id="studentClass" required>
+          <select id="studentClass" name="studentClass" required>
             <option value="">Class</option>
             <option>11</option>
             <option>12</option>
           </select>
 
           <label for="studentSec">Section</label>
-          <select id="studentSec" required>
+          <select id="studentSec" name="studentSec" required>
             <option value="">Sec</option>
             <option>A</option>
             <option>B</option>
@@ -310,24 +298,104 @@ Result <select>
           </select>
 
           <label for="rollNo">RollNo</label>
-          <select id="rollNo" required></select>
+          <select id="rollNo" name="rollNo" required></select>
 
-          <table id="hrSecTable" border="1" cellspacing="0" cellpadding="5" style="width:100%; text-align:center; border-collapse:collapse; margin-top:20px;">
+          <!-- Academic Subjects Table -->
+          <h3 style="margin-top:20px;"></h3>
+          <table id="hrSecTable" border="1" cellspacing="0" cellpadding="5" 
+            style="width:100%; text-align:center; border-collapse:collapse; margin-top:10px;">
+            <tr>
+              <th>Subject</th>
+              <th>Ext</th>
+              <th>Int</th>
+              <th>Total</th>
+            </tr>
+            ${["English","Alt/Tenyidie","History","Pol.Sc","Sociology","Eco/Edu"].map((sub,i) => `
+              <tr>
+                <td align="left">${sub}</td>
+                <td><input type="number" name="hrExt_${i}" class="hrExt" min="0" max="100"></td>
+                <td><input type="number" name="hrInt_${i}" class="hrInt" min="0" max="100"></td>
+                <td><input type="text" name="hrTotal_${i}" class="hrTotal" readonly></td>
+              </tr>`).join('')}
+            <tr><th align="left">Total Marks</th><td colspan="3"><input type="text" id="hrSecTotal" name="hrSecTotal" readonly></td></tr>
+            <tr><th align="left">Average Marks</th><td colspan="3"><input type="text" id="hrSecAverage" name="hrSecAverage" readonly></td></tr>
+            <tr><th align="left">Remarks</th><td colspan="3"><input type="text" size="30" id="hrSecComments" name="hrSecComments"></td></tr>
+          </table>
+
+          <!-- Co-scholastic Evaluation Table -->
+          <h3 style="margin-top:30px;">Co-scholastic Evaluation</h3>
+          <table id="coScholasticTable" border="1" cellspacing="0" cellpadding="5" 
+            style="width:100%; text-align:center; border-collapse:collapse; margin-top:10px;">
+            <tr>
+              <th>Activity</th>
+              <th>Grade</th>
+            </tr>
+            ${["EE","Life Skills Development (LSD)","Work Experience & Art (W.E)","Physical Education (P.E)"].map((sub,i) => `
+              <tr>
+                <td align="left">${sub}</td>
+                <td><input type="text" name="coschol_${i}" class="gradeOnly" placeholder=""></td>
+              </tr>`).join('')}
+          </table>
+<BR>
+NWD &nbsp;&nbsp;<input type="text" name="NWD" SIZE=3> &nbsp;&nbsp;Attendence &nbsp;&nbsp;<input type="text" name="attendance" SIZE=3><BR>
+<BR>
+Result <select name="result">
+<option value=""></option>
+<option value="Promoted">Promoted</option>
+<option value="Fail">Fail</option>
+<option value="Pass">Pass</option>
+<option value="Needs Improvement">Needs Improvement</option>
+<option value="Passed under Consideration">Passed under Consideration</option>
+<option value="Passed with TC">Passed with TC</option>
+</select>
+
+
+          ${signatureHTML()}
+          ${buttonsHTML()}
+        </form>`;
+    }
+
+    function PhaseIILayout() {
+      return `
+        ${headerHTML()}
+        <form id="PhaseIIForm">
+          <label for="studentName">Name</label>
+          <input type="text" id="studentName" name="studentName" placeholder="Student Name" required />
+
+          <label for="studentClass">Class</label>
+          <select id="studentClass" name="studentClass" required>
+            <option value="">Class</option>
+            <option>VIII</option>
+            <option>IX</option>
+          </select>
+
+          <label for="studentSec">Section</label>
+          <select id="studentSec" name="studentSec" required>
+            <option value="">Sec</option>
+            <option>A</option>
+            <option>B</option>
+            <option>C</option>
+            <option>D</option>
+          </select>
+
+          <label for="rollNo">RollNo</label>
+          <select id="rollNo" name="rollNo" required></select>
+
+          <table id="phaseIITable" border="1" cellspacing="0" cellpadding="5" style="width:100%; text-align:center; border-collapse:collapse; margin-top:20px;">
             <tr>
               <th>Subject</th>
               <th>Total Marks</th>
             </tr>
-            <tr><td align="left">English</td><td><input type="number" class="hrSecMark" min="0" max="100"></td></tr>
-            <tr><td align="left">Alt/Tenyidie</td><td><input type="number" class="hrSecMark" min="0" max="100"></td></tr>
-            <tr><td align="left">History</td><td><input type="number" class="hrSecMark" min="0" max="100"></td></tr>
-            <tr><td align="left">Pol.Sc</td><td><input type="number" class="hrSecMark" min="0" max="100"></td></tr>
-            <tr><td align="left">Sociology</td><td><input type="number" class="hrSecMark" min="0" max="100"></td></tr>
-            <tr><td align="left">Eco/Edu</td><td><input type="number" class="hrSecMark" min="0" max="100"></td></tr>
-            <tr><td align="left">EVS</td><td><input type="number" class="hrSecMark" min="0" max="100"></td></tr>
-            <tr><th align="left">Total Marks</th><td><input type="text" id="hrSecTotal" readonly></td></tr>
-            <tr><th align="left">Average Marks</th><td><input type="text" id="hrSecAverage" readonly></td></tr>
-            <tr><th align="left">Remarks</th><td><input type="text" size="30" id="hrSecComments"></td></tr>
+            ${['English','Alt/Tenyidie/Hindi','Social Science','Science','Maths','FIT/EE/BK/GRAMMAR'].map((s,i) => `
+              <tr><td align="left">${s}</td><td><input type="number" name="phase2_${i}" class="phase2Mark" min="0" max="100"></td></tr>
+            `).join('')}
           </table>
+<br><br>
+          Remarks/Performance <label for="comments"></label><br>
+          <textarea id="comments" name="comments" placeholder="Enter comments here..." rows="3" style="width:100%;"></textarea><br>
+
+
+<BR><BR>
 
           ${signatureHTML()}
           ${buttonsHTML()}
@@ -349,168 +417,36 @@ Result <select>
       recalc();
     }
 
-    function getHrSecLayout() {
-  return `
-    ${headerHTML()}
-    <form id="hrSecForm">
-      <label for="studentName">Name</label>
-      <input type="text" id="studentName" placeholder="Student Name" required />
+    function initHrSec() {
+      const extInputs = document.querySelectorAll('.hrExt');
+      const intInputs = document.querySelectorAll('.hrInt');
+      const totalInputs = document.querySelectorAll('.hrTotal');
+      const totalEl = document.getElementById('hrSecTotal');
+      const avgEl = document.getElementById('hrSecAverage');
 
-      <label for="studentClass">Class</label>
-      <select id="studentClass" required>
-        <option value="">Class</option>
-        <option>11</option>
-        <option>12</option>
-      </select>
-
-      <label for="studentSec">Section</label>
-      <select id="studentSec" required>
-        <option value="">Sec</option>
-        <option>A</option>
-        <option>B</option>
-        <option>C</option>
-        <option>D</option>
-      </select>
-
-      <label for="rollNo">RollNo</label>
-      <select id="rollNo" required></select>
-
-      <table id="hrSecTable" border="1" cellspacing="0" cellpadding="5" 
-        style="width:100%; text-align:center; border-collapse:collapse; margin-top:20px;">
-        <tr>
-          <th>Subject</th>
-          <th>Ext</th>
-          <th>Int</th>
-          <th>Total</th>
-        </tr>
-        ${["English","Alt/Tenyidie","History","Pol.Sc","Sociology","Eco/Edu","EE"].map(sub => `
-          <tr>
-            <td align="left">${sub}</td>
-            <td><input type="number" class="hrExt" min="0" max="100"></td>
-            <td><input type="number" class="hrInt" min="0" max="100"></td>
-            <td><input type="text" class="hrTotal" readonly></td>
-          </tr>`).join('')}
-        <tr><th align="left">Total Marks</th><td colspan="3"><input type="text" id="hrSecTotal" readonly></td></tr>
-        <tr><th align="left">Average Marks</th><td colspan="3"><input type="text" id="hrSecAverage" readonly></td></tr>
-        <tr><th align="left">Remarks</th><td colspan="3"><input type="text" size="30" id="hrSecComments"></td></tr>
-      </table>
-
-      ${signatureHTML()}
-      ${buttonsHTML()}
-    </form>`;
-}
-
-function getHrSecLayout() {
-  return `
-    ${headerHTML()}
-    <form id="hrSecForm">
-      <label for="studentName">Name</label>
-      <input type="text" id="studentName" placeholder="Student Name" required />
-
-      <label for="studentClass">Class</label>
-      <select id="studentClass" required>
-        <option value="">Class</option>
-        <option>11</option>
-        <option>12</option>
-      </select>
-
-      <label for="studentSec">Section</label>
-      <select id="studentSec" required>
-        <option value="">Sec</option>
-        <option>A</option>
-        <option>B</option>
-        <option>C</option>
-        <option>D</option>
-      </select>
-
-      <label for="rollNo">RollNo</label>
-      <select id="rollNo" required></select>
-
-      <!-- Academic Subjects Table -->
-      <h3 style="margin-top:20px;"></h3>
-      <table id="hrSecTable" border="1" cellspacing="0" cellpadding="5" 
-        style="width:100%; text-align:center; border-collapse:collapse; margin-top:10px;">
-        <tr>
-          <th>Subject</th>
-          <th>Ext</th>
-          <th>Int</th>
-          <th>Total</th>
-        </tr>
-        ${["English","Alt/Tenyidie","History","Pol.Sc","Sociology","Eco/Edu"].map(sub => `
-          <tr>
-            <td align="left">${sub}</td>
-            <td><input type="number" class="hrExt" min="0" max="100"></td>
-            <td><input type="number" class="hrInt" min="0" max="100"></td>
-            <td><input type="text" class="hrTotal" readonly></td>
-          </tr>`).join('')}
-        <tr><th align="left">Total Marks</th><td colspan="3"><input type="text" id="hrSecTotal" readonly></td></tr>
-        <tr><th align="left">Average Marks</th><td colspan="3"><input type="text" id="hrSecAverage" readonly></td></tr>
-        <tr><th align="left">Remarks</th><td colspan="3"><input type="text" size="30" id="hrSecComments"></td></tr>
-      </table>
-
-      <!-- Co-scholastic Evaluation Table -->
-      <h3 style="margin-top:30px;">Co-scholastic Evaluation</h3>
-      <table id="coScholasticTable" border="1" cellspacing="0" cellpadding="5" 
-        style="width:100%; text-align:center; border-collapse:collapse; margin-top:10px;">
-        <tr>
-          <th>Activity</th>
-          <th>Grade</th>
-        </tr>
-        ${["EE","Life Skills Development (LSD)","Work Experience & Art (W.E)","Physical Education (P.E)"].map(sub => `
-          <tr>
-            <td align="left">${sub}</td>
-            <td><input type="text" class="gradeOnly" placeholder=""></td>
-          </tr>`).join('')}
-      </table>
-<BR>
-NWD &nbsp;&nbsp;<input type=text SIZE=3> &nbsp;&nbsp;Attendence &nbsp;&nbsp;<input type=text SIZE=3><BR>
-<BR>
-Result <select>
-<option value=>
-<option value=Promoted>Promoted
-<option value=Fail>Fail
-<option value=Pass>Pass
-<option value=Needs Improvement>Needs Improvement
-<option value=Passed under Consideration>Passed under Consideration
-<option value=Passed with TC>Passed with TC
-</select>
-
-
-      ${signatureHTML()}
-      ${buttonsHTML()}
-    </form>`;
-}
-
-function initHrSec() {
-  const extInputs = document.querySelectorAll('.hrExt');
-  const intInputs = document.querySelectorAll('.hrInt');
-  const totalInputs = document.querySelectorAll('.hrTotal');
-  const totalEl = document.getElementById('hrSecTotal');
-  const avgEl = document.getElementById('hrSecAverage');
-
-  function recalc() {
-    let grandTotal = 0, subjectCount = 0;
-    extInputs.forEach((ext, i) => {
-      const int = intInputs[i];
-      const tot = totalInputs[i];
-      const extVal = parseInt(ext.value) || 0;
-      const intVal = parseInt(int.value) || 0;
-      const sum = (ext.value || int.value) ? extVal + intVal : "";
-      tot.value = sum;
-      if (sum !== "") {
-        grandTotal += extVal + intVal;
-        subjectCount++;
+      function recalc() {
+        let grandTotal = 0, subjectCount = 0;
+        extInputs.forEach((ext, i) => {
+          const int = intInputs[i];
+          const tot = totalInputs[i];
+          const extVal = parseInt(ext.value) || 0;
+          const intVal = parseInt(int.value) || 0;
+          const hasAny = (ext.value !== "" || int.value !== "");
+          const sum = hasAny ? (extVal + intVal) : "";
+          tot.value = sum;
+          if (hasAny) {
+            grandTotal += extVal + intVal;
+            subjectCount++;
+          }
+        });
+        if (totalEl) totalEl.value = grandTotal;
+        if (avgEl) avgEl.value = subjectCount > 0 ? (grandTotal / subjectCount).toFixed(2) : '';
       }
-    });
-    totalEl.value = grandTotal;
-    avgEl.value = subjectCount > 0 ? (grandTotal / subjectCount).toFixed(2) : '';
-  }
 
-  extInputs.forEach(inp => inp.addEventListener('input', recalc));
-  intInputs.forEach(inp => inp.addEventListener('input', recalc));
-  recalc();
-}
-
+      extInputs.forEach(inp => inp.addEventListener('input', recalc));
+      intInputs.forEach(inp => inp.addEventListener('input', recalc));
+      recalc();
+    }
 
     // ===================== COMMON LAYOUT SUBJECT WIRING =====================
     function initSubjects() {
@@ -518,13 +454,13 @@ function initHrSec() {
       const subjectFieldsContainer = document.getElementById("subjectFields");
       if (!subjectFieldsContainer) return;
       subjectFieldsContainer.innerHTML = "";
-      subjects.forEach(subject => {
+      subjects.forEach((subject, idx) => {
         subjectFieldsContainer.innerHTML += `
           <label>${subject}</label>
-          <input type="number" placeholder="EXT" min="0" max="100" oninput="calculateSubjectTotal(this)">
-          <input type="number" placeholder="INT" min="0" max="100" oninput="calculateSubjectTotal(this)">
-          <input type="number" placeholder="Total" readonly>
-          <input type="text" placeholder="Grade" readonly>
+          <input type="number" name="${subject}_ext" placeholder="EXT" min="0" max="100" oninput="calculateSubjectTotal()">
+          <input type="number" name="${subject}_int" placeholder="INT" min="0" max="100" oninput="calculateSubjectTotal()">
+          <input type="number" name="${subject}_total" placeholder="Total" readonly>
+          <input type="text" name="${subject}_grade" placeholder="Grade" readonly>
         `;
         if (subject === "Computer") subjectFieldsContainer.innerHTML += '<br/>';
       });
@@ -571,29 +507,28 @@ function initHrSec() {
 
     // ===================== EXPORT =====================
     function downloadAsImage() {
-  const container = document.querySelector('.container');
-  html2canvas(container, { useCORS: true, scale: 2 }).then(canvas => {
-    canvas.toBlob(function(blob) {
-      const link = document.createElement('a');
-      const studentName = document.getElementById('studentName')?.value || 'marksheet';
-      const studentClass = document.getElementById('studentClass')?.value || '';
-      const fileName = `${studentName}_Class${studentClass}.jpg`;
+      const container = document.querySelector('.container');
+      html2canvas(container, { useCORS: true, scale: 2 }).then(canvas => {
+        canvas.toBlob(function(blob) {
+          const link = document.createElement('a');
+          const studentName = document.getElementById('studentName')?.value || 'marksheet';
+          const studentClass = document.getElementById('studentClass')?.value || '';
+          const fileName = `${studentName}_Class${studentClass}.jpg`;
 
-      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-        // For old IE/Edge
-        window.navigator.msSaveOrOpenBlob(blob, fileName);
-      } else {
-        const url = URL.createObjectURL(blob);
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }
-    }, 'image/jpeg', 1.0);
-  });
-}
+          if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+            window.navigator.msSaveOrOpenBlob(blob, fileName);
+          } else {
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          }
+        }, 'image/jpeg', 1.0);
+      }).catch(err => console.error('html2canvas error', err));
+    }
 
     // ===================== ROLL NOS =====================
     function initRollNos() {
@@ -617,9 +552,42 @@ function initHrSec() {
     function wireExamHandlers() {
       const select = document.getElementById('examType');
       if (!select) return;
+      // remove previous handler if any
+      select.onchange = null;
       select.addEventListener('change', () => {
         handleExamTypeChange();
       });
+    }
+
+    // ===================== SAVE / EXPORT JSON =====================
+    function saveData() {
+      const form = document.querySelector("form");
+      if (!form) return;
+
+      const formData = {};
+      new FormData(form).forEach((value, key) => {
+        if (formData[key]) {
+          if (!Array.isArray(formData[key])) formData[key] = [formData[key]];
+          formData[key].push(value);
+        } else {
+          formData[key] = value;
+        }
+      });
+
+      const jsonData = JSON.stringify(formData, null, 2);
+      const blob = new Blob([jsonData], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      const studentName = document.getElementById('studentName')?.value || 'marksheet';
+      const studentClass = document.getElementById('studentClass')?.value || '';
+      link.download = `${studentName}_Class${studentClass}.json`;
+
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     }
 
     // ===================== SELF TESTS =====================
@@ -630,12 +598,10 @@ function initHrSec() {
         console.assert(typeof getWeeklyTestLayout === 'function', 'getWeeklyTestLayout should be defined');
         console.assert(typeof getHrSecLayout === 'function', 'getHrSecLayout should be defined');
         console.assert(typeof handleExamTypeChange === 'function', 'handleExamTypeChange should be defined');
-        // Build once to test roll nos
         document.getElementById('mainContent').innerHTML = getCommonLayout();
         initSubjects(); initRollNos();
         const rn = document.getElementById('rollNo');
         console.assert(rn && rn.options.length === 90, 'RollNo should have 90 options');
-        // Exam text box test
         const exSel = document.getElementById('examType');
         if (exSel) {
           exSel.value = 'Weekly Test';
@@ -644,49 +610,97 @@ function initHrSec() {
           console.assert(boxVal === 'Weekly Test', 'Exam text box should mirror the selected exam');
         }
         console.log('[SelfTest] Core functions present and basic checks passed');
-        // Reset to normal UI
         loadMarksheet();
       } catch (e) {
         console.warn('[SelfTest] Failed:', e);
       }
     })();
-function saveData() {
-  const form = document.querySelector("form");
-  if (!form) return;
 
-  // Collect form data
-  const formData = {};
-  new FormData(form).forEach((value, key) => {
-    if (formData[key]) {
-      // handle multiple inputs with same name
-      if (!Array.isArray(formData[key])) {
-        formData[key] = [formData[key]];
-      }
-      formData[key].push(value);
-    } else {
-      formData[key] = value;
+function hideActionButtons() {
+      document.querySelectorAll(".button-row button").forEach(btn => {
+        btn.classList.add("hidden");
+      });
     }
-  });
 
-  // Convert to JSON
-  const jsonData = JSON.stringify(formData, null, 2);
+    function showActionButtons() {
+      document.querySelectorAll(".button-row button").forEach(btn => {
+        btn.classList.remove("hidden");
+      });
+    }
 
-  // Download JSON file
-  const blob = new Blob([jsonData], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
+    // ===================== DOWNLOAD AS IMAGE =====================
+    function downloadAsImage() {
+      hideActionButtons(); // hide before capture
 
-  const studentName = document.getElementById("studentName")?.value || "marksheet";
-  const studentClass = document.getElementById("studentClass")?.value || "";
-  link.download = `${studentName}_Class${studentClass}.json`;
+      const container = document.querySelector('.container');
+      html2canvas(container, { useCORS: true, scale: 2 }).then(canvas => {
+        canvas.toBlob(function(blob) {
+          const link = document.createElement('a');
+          const studentName = document.getElementById('studentName')?.value || 'marksheet';
+          const studentClass = document.getElementById('studentClass')?.value || '';
+          const fileName = `${studentName}_Class${studentClass}.jpg`;
 
-  link.href = url;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
+          if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+            window.navigator.msSaveOrOpenBlob(blob, fileName);
+          } else {
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          }
 
+          showActionButtons(); // restore buttons
+        }, 'image/jpeg', 1.0);
+      }).catch(err => {
+        console.error('html2canvas error', err);
+        showActionButtons();
+      });
+    }
+
+    // ===================== SAVE DATA =====================
+    function saveData() {
+      hideActionButtons();
+
+      const form = document.querySelector("form");
+      if (!form) return;
+
+      const formData = {};
+      new FormData(form).forEach((value, key) => {
+        if (formData[key]) {
+          if (!Array.isArray(formData[key])) formData[key] = [formData[key]];
+          formData[key].push(value);
+        } else {
+          formData[key] = value;
+        }
+      });
+
+      const jsonData = JSON.stringify(formData, null, 2);
+      const blob = new Blob([jsonData], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      const studentName = document.getElementById('studentName')?.value || 'marksheet';
+      const studentClass = document.getElementById('studentClass')?.value || '';
+      link.download = `${studentName}_Class${studentClass}.json`;
+
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showActionButtons();
+    }
+
+    // ===================== PRINT =====================
+    function printMarksheet() {
+      hideActionButtons();
+      window.print();
+      showActionButtons();
+    }
   </script>
 </body>
 </html>
